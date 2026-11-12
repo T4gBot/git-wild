@@ -3,7 +3,9 @@ from flask import Flask, redirect, render_template, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///observations.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    'postgresql+psycopg2://wildlife_user:mysecretpassword@localhost:5432/wildlife_db'
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
