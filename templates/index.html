@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NERDS uc - Wild Cam Observation</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #333; }
+        h1 { color: #2e7d32; }
+        form { display: flex; gap: 1rem; margin: 2rem 0; flex-wrap: wrap; }
+        input { padding: 0.75rem; flex: 1; min-width: 200px; border-radius: 4px; border: 1px solid #ccc; font-size: 1rem; }
+        button { padding: 0.75rem 1.5rem; background: #2e7d32; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        button:hover { background: #1b5e20; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 0.75rem; border: 1px solid #ddd; text-align: left; }
+        th { background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>🌿 NERDS uc - Wild Cam Observation</h1>
+    <p>Logging wildlife sightings from live streams via Flask & SQLite.</p>
+
+    <!-- Input Widgets Form -->
+    <form method="POST">
+        <input type="text" name="animal" placeholder="Animal Name (e.g., Wolf, Deer, Owl)" required>
+        <input type="text" name="stream" placeholder="Stream Name (e.g., Cam-Alpha-01)" required>
+        <button type="submit">Log Animal</button>
+    </form>
+
+    <!-- Observation Log Table -->
+    <h2>Observation Log</h2>
+    {% if not observations %}
+        <p style="color: #666;">No observations logged yet. Submit an entry above!</p>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Animal</th>
+                    <th>Stream</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obs in observations %}
+                <tr>
+                    <td>{{ obs.animal }}</td>
+                    <td>{{ obs.stream }}</td>
+                    <td>{{ obs.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</body>
+</html>
