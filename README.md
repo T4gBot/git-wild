@@ -8,57 +8,99 @@ Nature Exploration by Radio and Data Streams Unlimited (NERDS uc)
 
 ## Overview
 
-`git-wild` is the central web application and deployment setup for the **NERDS uc Wild Cam Observation Logger**.
+`git-wild` is the web application behind the **NERDS uc Wild Cam Observation Logger**: a small Flask app where operators log animal sightings and see the full history on one page.
 
-The application allows operators to select a live stream, log animal sightings (species, time, and stream ID), and view the full activity log on screen. The app is packaged in a Docker container and deployed across three Ubuntu worker nodes managed via Proxmox, fronted by a Traefik load balancer.
+Each observation consists of:
+
+* **Animal**: free-text species name (e.g. `Wolf`, `Deer`, `Owl`)
+* **Stream**: free-text stream/camera name (e.g. `Cam-Alpha-01`)
+* **Timestamp**: set automatically on the server (UTC)
+
+Observations are stored in PostgreSQL and listed newest first. The app does not embed or play the live streams itself; the stream is just a label you type in.
 
 ---
 
 ## Tech Stack
 
-* **App:** Python / HTML / CSS / JS
+* **App:** Python, Flask, Flask-SQLAlchemy, a single Jinja2 template with inline HTML/CSS (no JavaScript)
+* **Database:** PostgreSQL (via `psycopg2-binary`)
+* **Server:** Gunicorn (2 workers) inside Docker
 * **Runtime:** Docker & Docker Compose
-* **Infrastructure:** Proxmox VE (Ubuntu Server VMs)
-* **Load Balancer:** Traefik
+* **Tooling:** Ruff (lint/format) and mypy, configured in `pyproject.toml`
 
 ---
 
-## Features
+## Project Structure
 
-* **Observation Logging:** Simple input widgets to submit animal sightings per stream.
-* **Live Log Output:** Prints all logged observations directly to the screen.
-* **Dockerized Setup:** Single-command deployment using Docker Compose across worker nodes.
+```text
+.
+├── app.py              # Flask app, Observation model, single "/" route
+├── templates/
+│   └── index.html      # Form + observation table
+├── Dockerfile          # python:3.11-slim image, runs gunicorn on :8080
+├── docker-compose.yml  # Single "web" service (no database included)
+├── requirements.txt
+└── pyproject.toml      # Ruff & mypy config
+```
+
+---
+
+## Configuration
+
+The app reads one environment variable, `DATABASE_URL`, and **will not start without it**. It can be set in the environment or in a `.env` file in the project root (loaded with `python-dotenv`; `.env` is git-ignored).
+
+```env
+DATABASE_URL=postgresql+psycopg2://USER:PASSWORD@HOST:5432/DBNAME
+```
+
+The database must already exist and be reachable. On startup the app creates the `observation` table automatically if it is missing.
+
+> **Note:** `docker-compose.yml` does not start a PostgreSQL container. You need to provide your own database (another container, a VM, a managed instance).
 
 ---
 
 ## Setup & Deployment
 
-### Quickstart with Docker Compose
-
-To build and launch the application:
+### Run with Docker Compose
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/git-wild.git
+git clone https://github.com/T4gBot/git-wild.git
 cd git-wild
 
-# Start the application
-docker compose up -d --build
+# Provide the database connection
+echo 'DATABASE_URL=postgresql+psycopg2://USER:PASSWORD@HOST:5432/DBNAME' > .env
 
+docker compose up -d --build
 ```
 
-Access the app at `http://localhost:8080` (or your worker VM IP).
+The app is available at `http://localhost:8080` (or the host's IP).
 
-To bring the stack down:
+Stop it with:
 
 ```bash
 docker compose down
-
 ```
+
+The `.env` file is copied into the image by `COPY . .` (there is no `.dockerignore`). Avoid pushing the built image to a public registry, or add a `.dockerignore` and pass `DATABASE_URL` through Compose's `environment:` / `env_file:` instead.
+
+### Run locally without Docker
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+export DATABASE_URL=postgresql+psycopg2://USER:PASSWORD@HOST:5432/DBNAME
+python app.py          # Flask dev server with debug=True on port 8080
+```
+
+`python app.py` runs with `debug=True` and is meant for development only. The Docker image uses Gunicorn.
 
 ---
 
-## Architecture
+## Intended Infrastructure
+
+The app is deployed as a container on three Ubuntu Server VMs running on Proxmox VE, with a Traefik VM acting as load balancer in front of them:
 
 ```text
                [ Client Traffic ]
@@ -74,10 +116,19 @@ docker compose down
   │ Worker 01 │  │ Worker 02 │  │ Worker 03 │  (Ubuntu VMs on Proxmox)
   │ [Docker]  │  │ [Docker]  │  │ [Docker]  │
   └───────────┘  └───────────┘  └───────────┘
-
 ```
 
-Traffic routes through the Traefik VM, distributing incoming requests across the three worker VMs running the `git-wild` Docker container.
+The Traefik, Proxmox and PostgreSQL setup is **not part of this repository**; only the application container is. All workers must point `DATABASE_URL` at the same database so they share one observation log.
+
+---
+
+## Known Limitations
+
+* No authentication: anyone who can reach the app can add entries.
+* No edit/delete, pagination or filtering; the whole log is rendered on every page load.
+* Dependencies in `requirements.txt` are unpinned, and the file is saved as UTF-16 (pip handles it, but many tools expect UTF-8).
+* The Docker image uses Python 3.11, while the Ruff/mypy config targets 3.13.
+* No tests.
 
 ---
 
