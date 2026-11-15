@@ -1,4 +1,5 @@
 import os
+import socket
 from datetime import UTC, datetime
 
 from dotenv import load_dotenv
@@ -24,6 +25,16 @@ class Observation(db.Model):
 
 with app.app_context():
     db.create_all()
+
+
+@app.context_processor
+def inject_hostname() -> dict[str, str]:
+    return {"hostname": socket.gethostname()}
+
+
+@app.route("/whoami")
+def whoami() -> str:
+    return socket.gethostname()
 
 
 @app.route("/", methods=["GET", "POST"])
