@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NERDS uc - Wild Cam Observation</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
+    <title>{{ theme.title }}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>{{ theme.icon }}</text></svg>">
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #333; }
         h1 { color: #2e7d32; }
@@ -19,7 +19,7 @@
     </style>
 </head>
 <body>
-    <h1>🌿 NERDS uc - Wild Cam Observation</h1>
+    <h1>{{ theme.image }} {{ theme.title }}</h1>
     <p>Logging wildlife sightings from live streams via Flask & PostgreSQL.</p>
 
     <!-- Input Widgets Form -->
