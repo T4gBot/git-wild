@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, request, url_for
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from werkzeug.wrappers.response import Response
 
 load_dotenv()
@@ -15,7 +16,28 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
-APP_MODE = os.environ.get("APP_MODE", "sea")
+THEMES: dict[str, dict[str, str]] = {
+    "default": {
+        "title": "NERDS uc - Wild Cam Observation",
+        "image": "🌿",
+        "icon": "🌿",
+    },
+    "land": {
+        "title": "NERDS uc - Land & Air Observation",
+        "image": "🦌",
+        "icon": "🦅",
+    },
+    "sea": {
+        "title": "NERDS uc - Sea Observation",
+        "image": "🐋",
+        "icon": "🌊",
+    },
+}
+
+APP_MODE = os.environ.get("APP_MODE", "default").strip().lower()
+if APP_MODE not in THEMES:
+    APP_MODE = "default"
+THEME = THEMES[APP_MODE]
 
 
 class Observation(db.Model):
@@ -26,8 +48,11 @@ class Observation(db.Model):
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
 
 
-with app.app_context():
-    db.create_all()
+# Serialise create_all() across workers via a lock to avoid races that abort gunicorn
+with app.app_context(), db.engine.begin() as conn:
+    if conn.dialect.name == "postgresql":
+        conn.execute(text("SELECT pg_advisory_xact_lock(727274)"))
+    db.metadata.create_all(conn)
 
 
 @app.context_processor
@@ -52,7 +77,9 @@ def index() -> str | Response:
         return redirect(url_for("index"))
 
     observations = Observation.query.filter_by(category=APP_MODE).order_by(Observation.timestamp.desc()).all()
-    return render_template("index.html", observations=observations, app_mode = APP_MODE)
+    return render_template(
+        "index.html", observations=observations, app_mode=APP_MODE, theme=THEME
+    )
 
 
 if __name__ == "__main__":
