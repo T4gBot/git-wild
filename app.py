@@ -15,8 +15,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
-with open("/host-hostname") as f:
-    HOSTNAME = f.read().strip()
+HOSTNAME = os.environ.get("HOSTNAME", "unknown").strip().lower()
 
 THEMES: dict[str, dict[str, str]] = {
     "default": {

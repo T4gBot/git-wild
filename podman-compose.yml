@@ -11,8 +11,6 @@ services:
       - DISABLE_SQLALCHEMY_CEXT=1
       - GUNICORN_CMD_ARGS=--access-logfile - --access-logformat '%({x-forwarded-for}i)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s'
     restart: always
-    volumes:
-      - /etc/hostname:/host-hostname:ro
 
   sea-app:
     build: .
@@ -28,5 +26,3 @@ services:
     restart: always
     depends_on:
       - land-app
-    volumes:
-      - /etc/hostname:/host-hostname:ro
