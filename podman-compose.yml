@@ -2,7 +2,6 @@ services:
   land-app:
     build: .
     container_name: nerds-land
-    uts: host
     ports:
       - "8080:8080"
     env_file:
@@ -12,11 +11,12 @@ services:
       - DISABLE_SQLALCHEMY_CEXT=1
       - GUNICORN_CMD_ARGS=--access-logfile - --access-logformat '%({x-forwarded-for}i)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s'
     restart: always
+    volumes:
+      - /etc/hostname:/host-hostname:ro
 
   sea-app:
     build: .
     container_name: nerds-sea
-    uts: host
     ports:
       - "8081:8080"
     env_file:
@@ -28,3 +28,5 @@ services:
     restart: always
     depends_on:
       - land-app
+    volumes:
+      - /etc/hostname:/host-hostname:ro

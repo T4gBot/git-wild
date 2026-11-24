@@ -1,5 +1,4 @@
 import os
-import socket
 from datetime import UTC, datetime
 
 from dotenv import load_dotenv
@@ -15,6 +14,9 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
+
+with open("/host-hostname") as f:
+    HOSTNAME = f.read().strip()
 
 THEMES: dict[str, dict[str, str]] = {
     "default": {
@@ -57,12 +59,12 @@ with app.app_context(), db.engine.begin() as conn:
 
 @app.context_processor
 def inject_hostname() -> dict[str, str]:
-    return {"hostname": socket.gethostname()}
+    return {"hostname": HOSTNAME}
 
 
 @app.route("/whoami")
 def whoami() -> str:
-    return socket.gethostname()
+    return HOSTNAME
 
 
 @app.route("/", methods=["GET", "POST"])
