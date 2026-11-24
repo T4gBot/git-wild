@@ -42,6 +42,7 @@ THEME = THEMES[APP_MODE]
 
 
 class Observation(db.Model):
+    __tablename__ = f"observations_{APP_MODE}"
     id = db.Column(db.Integer, primary_key=True)
     animal = db.Column(db.String(100), nullable=False)
     stream = db.Column(db.String(100), nullable=False)
