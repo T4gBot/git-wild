@@ -1,30 +1,29 @@
 services:
-  land-air-app:
+  land-app:
     build: .
-    container_name: nerds-land-air
+    container_name: nerds-land
+    uts: host
     ports:
       - "8080:8080"
-    
+    env_file:
+      - .env
     environment:
-      - APP_MODE=land_air
-      - PORT=8080
-    
-    restart: unless-stopped
-
-
+      - APP_MODE=land
+      - DISABLE_SQLALCHEMY_CEXT=1
+      - GUNICORN_CMD_ARGS=--access-logfile - --access-logformat '%({x-forwarded-for}i)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s'
+    restart: always
 
   sea-app:
-    build: .
     container_name: nerds-sea
+    uts: host
     ports:
       - "8081:8080"
-    
+    env_file:
+      - .env
     environment:
       - APP_MODE=sea
-      - PORT=8080
-      
-    restart: unless-stopped
-
-    
-
-
+      - DISABLE_SQLALCHEMY_CEXT=1
+      - GUNICORN_CMD_ARGS=--access-logfile - --access-logformat '%({x-forwarded-for}i)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s'
+    restart: always
+    depends_on:
+      - land-app
